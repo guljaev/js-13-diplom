@@ -86,12 +86,12 @@ class Level {
 	constructor(grid, actors) {
 		this.grid = grid;
 		this.actors = actors;
-		this.player = actors.filter((actor) => (actor.type === 'player')).pop();
-		this.height = grid.length;
-		this.width = grid.reduce(function(pv, cv) {
+		this.player = (actors === undefined) ? undefined : actors.filter((actor) => (actor.type === 'player')).pop();
+		this.height = (grid === undefined) ? 0 : grid.length;
+		this.width = (grid === undefined) ? 0 : grid.reduce(function(pv, cv) {
 			return cv.length > pv ? cv.length : pv;
 		}, 0);
-		this.status;
+		this.status = null;
 		this.finishDelay = 1;
 	}
 
@@ -99,6 +99,7 @@ class Level {
 		if ((this.status !== null) && (this.finishDelay < 0)) {
 			return true;
 		}
+		return false;
 	}
 
 	actorAt(actor) {
@@ -106,11 +107,19 @@ class Level {
 			throw new Error('В метод actorAt передан не объект класса Actor');
 		}
 
+		if (this.actors === undefined) {
+			return undefined;
+		}
+
 		for (let i = 0; i < this.actors.length; i++) {
 			if (actor.isIntersect(this.actors[i])) {
 				return this.actors[i];
 			}
 		}
+
+		// if (this.grid === undefined || this.grid[0] === undefined || this.grid[0][0] === undefined) {
+		// 	return undefined;
+		// }
 	}
 
 	obstacleAt(pos, size) {
@@ -126,8 +135,8 @@ class Level {
 			return 'wall';
 		}
 
-		for (let y = pos.y; y < pos.y + size.y; y++) {
-		  for (let x = pos.x; x < pos.x + size.x; x++) {
+		for (let y = Math.floor(pos.y); y <= Math.ceil(pos.y + size.y) - 1; y++) {
+		  for (let x = Math.floor(pos.x); x <= Math.ceil(pos.x + size.x) - 1; x++) {
 		    if (this.grid[y][x]) {
 		      return this.grid[y][x];
 		    }
@@ -143,6 +152,10 @@ class Level {
 	}
 
 	noMoreActors(actorType) {
+		if ( (this.actors === []) || (this.actors === undefined) ) {
+			return true;
+		}
+
 		for (let i = 0; i < this.actors.length; i++) {
 			if (this.actors[i].type === actorType) {
 				return false;
@@ -153,16 +166,19 @@ class Level {
 
 	playerTouched(type, actor) {
 		if (this.status !== null) {
-			if ( (type === 'lava') || (type === 'fireball') ) {
-				this.status = 'lost';
-			}
+			return;
+		}
+		
+		if ( (type === 'lava') || (type === 'fireball') ) {
+			this.status = 'lost';
+		}
 
-			if (type === 'coin') {
-				this.removeActor(actor);
-				if (this.noMoreActors('coin')) {
-					this.status = 'won';
-				}
+		if (type === 'coin') {
+			this.removeActor(actor);
+			if (this.noMoreActors('coin')) {
+				this.status = 'won';
 			}
 		}
+		
 	}
 }
