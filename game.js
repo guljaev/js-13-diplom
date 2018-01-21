@@ -347,6 +347,37 @@ class FireRain extends Fireball {
 	}
 }
 
+class Coin extends Actor {
+	constructor(pos = new Vector(0, 0)) {
+		super(pos);
+		this.pos = this.initialPos = pos.plus(new Vector(0.2, 0.1));
+		this.size = new Vector(0.6, 0.6);
+		this.springSpeed = 8;
+		this.springDist = 0.07;
+		this.spring = Math.random() * 2 * Math.PI;
+	}
+
+	get type() {
+		return 'coin';
+	}
+
+	updateSpring(time = 1) {
+		this.spring += this.springSpeed * time;
+	}
+
+	getSpringVector() {
+		return new Vector(0, this.springDist * Math.sin(this.spring));
+	}
+
+	getNextPosition(time = 1) {
+		this.updateSpring(time);
+		return this.initialPos.plus(this.getSpringVector());
+	}
+
+	act(time = 1) {
+		this.pos = this.getNextPosition(time);
+	}
+}
 
 
 
