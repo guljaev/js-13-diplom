@@ -182,3 +182,141 @@ class Level {
 		
 	}
 }
+
+
+class LevelParser {
+	constructor(dict) {
+		this.dict = dict;
+	}
+
+	actorFromSymbol(symbol) {
+		if ( (symbol === undefined) || (symbol === ' ') || (symbol === 'x') || (symbol === '!') ) {
+			return undefined;
+		}
+		return this.dict[symbol];
+	}
+
+	obstacleFromSymbol(symbol) {
+		if (symbol === undefined) {
+			return undefined;
+		}
+
+		switch(symbol) {
+			case 'x': 
+				return 'wall';
+			case '!':
+				return 'lava';
+			default:
+				return;
+		}
+	}
+
+	//Array of Strings (plan of level) convert to Array of Arrays (only for grid - without Actors)
+	createGrid(plan) {
+		if ( (plan === undefined) || (plan.length === 0) ) {
+			return [];
+		}
+		
+		const grid = [];
+
+		for (let i = 0; i < plan.length; i++) {
+			const str = plan[i];
+			const gridLine = [];
+
+			for (let j = 0; j < str.length; j++) {
+				gridLine.push(this.obstacleFromSymbol(str[j]));
+			}
+
+			grid.push(gridLine);
+		}
+
+		return grid;
+	}
+
+	//return Array Actors from Array of Strings(plan of level)
+	createActors(plan) {
+		if ( (plan === undefined) || (plan.length === 0) ) {
+			return [];
+		}
+
+		const actors = [];
+
+		for (let i = 0; i < plan.length; i++) {
+			const str = plan[i];
+
+			for (let j = 0; j < str.length; j++) {
+				if ( !(this.dict) || (Object.keys(this.dict).length === 0) || !(str[j] in this.dict) ) {
+					continue;
+				}
+
+				//take constructor of moving actor from dictionary
+				const ActorConstructor = this.actorFromSymbol(str[j]);
+
+				if (!ActorConstructor) {
+					continue;
+				}
+
+				if ( ( Actor.prototype === ActorConstructor.prototype) || ( Actor.prototype.isPrototypeOf(ActorConstructor.prototype) ) ) {
+					actors.push( new ActorConstructor( new Vector(j, i) ) );
+				}
+			}
+		}
+
+		return actors;
+	}
+
+	parse(plan) {
+		return new Level( this.createGrid(plan), this.createActors(plan) );
+	}
+}
+
+
+
+
+
+// const schema = [
+//   '         ',
+//   '         ',
+//   '         ',
+//   '         ',
+//   '     !xxx',
+//   '         ',
+//   'xxx!     ',
+//   '         '
+// ];
+// const parser = new LevelParser();
+// const level = parser.parse(schema);
+// runLevel(level, DOMDisplay);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// class Player extends Actor {
+// 	constructor(pos) {
+// 		super(pos, undefined, undefined);
+// 		this.pos = pos.plus(new Vector(0, 0.5));
+// 		this.size = new Vector(0.8, 1.5);
+// 		this.speed = new Vector(0, 0);
+// 	}
+
+// 	get type() {
+// 		return 'player';
+// 	}
+// }
+
