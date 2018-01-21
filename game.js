@@ -270,23 +270,86 @@ class LevelParser {
 	}
 }
 
+class Player extends Actor {
+	constructor(pos = new Vector(0, 0)) {
+		super(pos);
+		this.pos = pos.plus(new Vector(0, -0.5));
+		this.size = new Vector(0.8, 1.5);
+		// this.speed = new Vector(0, 0);
+	}
+
+	get type() {
+		return 'player';
+	}
+}
+
+class Fireball extends Actor {
+	constructor(pos = new Vector(0, 0), speed = new Vector(0, 0)) {
+		super(pos, undefined, speed);
+	}
+
+	get type() {
+		return 'fireball';
+	}
+
+	getNextPosition(time = 1) {
+		return new Vector(this.pos.x + this.speed.x * time, this.pos.y + this.speed.y * time);
+	}
+
+	handleObstacle() {
+		this.speed = new Vector(-this.speed.x, -this.speed.y);
+	}
+
+	act(time, level) {
+		const nextPos = this.getNextPosition(time);
+
+		if (!level.obstacleAt(nextPos, this.size)) {
+			this.pos = nextPos;
+		} else {
+			this.handleObstacle();
+		}
+	}
+}
+
+
+class HorizontalFireball extends Fireball {
+	constructor(pos = new Vector(0, 0)) {
+		super(pos);
+		this.speed = new Vector(2, 0);
+	}
+}
+
+
+class VerticalFireball extends Fireball {
+	constructor(pos = new Vector(0, 0)) {
+		super(pos);
+		this.speed = new Vector(0, 2);
+	}
+}
+
+
+class FireRain extends Fireball {
+	constructor(pos = new Vector(0, 0)) {
+		super(pos);
+		this.speed = new Vector(0, 3);
+
+		// this.initialPos = pos;
+		Object.defineProperty(this, 'initialPos', {
+			writable: false,
+			enumerable: true,
+			configurable: true,
+			value: pos
+		});
+	}
+
+	handleObstacle() {
+		this.pos = this.initialPos;
+	}
+}
 
 
 
 
-// const schema = [
-//   '         ',
-//   '         ',
-//   '         ',
-//   '         ',
-//   '     !xxx',
-//   '         ',
-//   'xxx!     ',
-//   '         '
-// ];
-// const parser = new LevelParser();
-// const level = parser.parse(schema);
-// runLevel(level, DOMDisplay);
 
 
 
@@ -307,16 +370,4 @@ class LevelParser {
 
 
 
-// class Player extends Actor {
-// 	constructor(pos) {
-// 		super(pos, undefined, undefined);
-// 		this.pos = pos.plus(new Vector(0, 0.5));
-// 		this.size = new Vector(0.8, 1.5);
-// 		this.speed = new Vector(0, 0);
-// 	}
-
-// 	get type() {
-// 		return 'player';
-// 	}
-// }
 
