@@ -380,9 +380,96 @@ class Coin extends Actor {
 }
 
 
+// const schema = [
+//   '         ',
+//   '         ',
+//   '    =    ',
+//   '       o ',
+//   '     !xxx',
+//   ' @       ',
+//   'xxx!     ',
+//   '         '
+// ];
+// const actorDict = {
+//   '@': Player,
+//   '=': HorizontalFireball
+// }
+// const parser = new LevelParser(actorDict);
+// const level = parser.parse(schema);
+// runLevel(level, DOMDisplay)
+//   .then(status => console.log(`Игрок ${status}`));
 
 
 
+// const schemas = [
+//   [
+//     '         ',
+//     '         ',
+//     '    =    ',
+//     '       o ',
+//     '     !xxx',
+//     ' @       ',
+//     'xxx      ',
+//     '         '
+//   ],
+//   [
+//     '        ',
+//     '        ',
+//     '        ',
+//     '        o',
+//     '        x',
+//     '@   x    ',
+//     'x        ',
+//     '         '
+//   ]
+// ];
+
+const actorDict = {
+  '@': Player,
+  'v': FireRain,
+  'o': Coin,
+  '=': HorizontalFireball,
+  '|': VerticalFireball
+}
+const parser = new LevelParser(actorDict);
+
+loadLevels()
+	.then( (schemasJSON) => JSON.parse(schemasJSON) )
+	.catch( (err) => console.log('Произошла ошибка ' + err) )
+	.then( (schemas) => runGame(schemas, parser, DOMDisplay) )
+	.then( () => alert('Вы победили!!!') )
+
+
+
+
+// loadLevels()
+// 	.then(function(schemasJSON) {
+// 		const schemas = JSON.parse(schemasJSON)
+// 		return runGame(schemas, parser, DOMDisplay);
+// 	})
+// 	.then(() => alert('Вы победили!!!'))
+
+
+
+
+// function JSONparse(schemasJSON) {
+// 	return new Promise(function(resolve, reject) {
+// 		const schemas = JSON.parse(schemasJSON);
+// 		resolve(schemas);
+// 	})
+// }
+
+// loadLevels()
+// 	.then(JSONparse)
+// 	.catch(() => console.error('Ошибка произошла'))
+// 	.then( (schemas) => runGame(schemas, parser, DOMDisplay) )
+// 	.then(() => alert('Вы победили!!!'))
+
+
+
+
+// runGame(schemas, parser, DOMDisplay)
+//   .then(() => alert('Вы выиграли приз!'));
 
 
 
