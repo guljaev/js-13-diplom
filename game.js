@@ -7,14 +7,10 @@ class Vector {
 	}
 
 	plus(moveVector) {
-		// try {
 		if (!(moveVector instanceof Vector)) {
 			throw new Error('Можно прибавлять к вектору только вектор типа Vector');
 		}
 		return new Vector(this.x + moveVector.x, this.y + moveVector.y);
-		// } catch(err) {
-		// 	console.log(err.message);
-		// }
 	}
 
 	times(multiplier) {
@@ -25,16 +21,12 @@ class Vector {
 
 class Actor {
 	constructor(pos = new Vector(0, 0), size = new Vector(1, 1), speed = new Vector(0, 0)) {
-		// try {
 			if (!((pos instanceof Vector) && (size instanceof Vector) && (speed instanceof Vector))) {
 				throw new Error('В Actor переданы не объекты класса Vector');
 			}
 		this.pos = pos;
 		this.size = size;
 		this.speed = speed;
-		// } catch(err) {
-		// 	console.log(err);
-		// }
 	}
 
 	act() {
@@ -58,7 +50,6 @@ class Actor {
 	}
 
 	isIntersect(movingActor) {
-		// try {
 		if (!(movingActor instanceof Actor)) {
 			throw new Error('В isIntersect передан не объект класса Actor');
 		}
@@ -68,17 +59,14 @@ class Actor {
 		}
 
 		const notCrossX = (this.right <= movingActor.left) || (this.left >= movingActor.right);
-	// 	console.log('Непересечение по X: ' + notCrossX);
+
 		const notCrossY = (this.top >= movingActor.bottom) || (this.bottom <= movingActor.top);
-	// 	console.log('Непересечение по Y: ' + notCrossY);
+
 		if (notCrossX || notCrossY) {
 			return false;
 		}
 		
 		return true;
-		// } catch(err) {
-		// 	console.log(err);
-		// }
 	}
 }
 
@@ -88,8 +76,8 @@ class Level {
 		this.actors = actors;
 		this.player = (actors === undefined) ? undefined : actors.filter((actor) => (actor.type === 'player')).pop();
 		this.height = (grid === undefined) ? 0 : grid.length;
-		this.width = (grid === undefined) ? 0 : grid.reduce(function(pv, cv) {
-			return cv.length > pv ? cv.length : pv;
+		this.width = (grid === undefined) ? 0 : grid.reduce(function(maxWidth, currentGridLine) {
+			return currentGridLine.length > maxWidth ? currentGridLine.length : maxWidth;
 		}, 0);
 		this.status = null;
 		this.finishDelay = 1;
@@ -107,19 +95,15 @@ class Level {
 			throw new Error('В метод actorAt передан не объект класса Actor');
 		}
 
-		if (this.actors === undefined) {
+		if (this.actors === undefined || this.actors.length === 0) {
 			return undefined;
 		}
 
-		for (let i = 0; i < this.actors.length; i++) {
-			if (actor.isIntersect(this.actors[i])) {
-				return this.actors[i];
-			}
+		for (const movingActor of this.actors) {
+		  if (actor.isIntersect(movingActor)) {
+				return movingActor;
+		  }
 		}
-
-		// if (this.grid === undefined || this.grid[0] === undefined || this.grid[0][0] === undefined) {
-		// 	return undefined;
-		// }
 	}
 
 	obstacleAt(pos, size) {
@@ -156,11 +140,12 @@ class Level {
 			return true;
 		}
 
-		for (let i = 0; i < this.actors.length; i++) {
-			if (this.actors[i].type === actorType) {
+		for (const movingActor of this.actors) {
+			if (movingActor.type === actorType) {
 				return false;
 			}
 		}
+
 		return true;
 	}
 
@@ -216,53 +201,26 @@ class LevelParser {
 		if ( (plan === undefined) || (plan.length === 0) ) {
 			return [];
 		}
-		
-		const grid = [];
 
-		for (let i = 0; i < plan.length; i++) {
-			const str = plan[i];
-			const gridLine = [];
-
-			for (let j = 0; j < str.length; j++) {
-				gridLine.push(this.obstacleFromSymbol(str[j]));
-			}
-
-			grid.push(gridLine);
-		}
-
-		return grid;
+		return plan.map( (str) => str.split('').map( (symbol) => this.obstacleFromSymbol(symbol) ) );
 	}
 
-	//return Array Actors from Array of Strings(plan of level)
+	//return Array of Actors from Array of Strings(plan of level)
 	createActors(plan) {
 		if ( (plan === undefined) || (plan.length === 0) ) {
 			return [];
 		}
 
-		const actors = [];
-
-		for (let i = 0; i < plan.length; i++) {
-			const str = plan[i];
-
-			for (let j = 0; j < str.length; j++) {
-				if ( !(this.dict) || (Object.keys(this.dict).length === 0) || !(str[j] in this.dict) ) {
-					continue;
+		return [].concat( ...plan.map( (str, y) => {
+			return str.split('').map( (symbol, x) => {
+				if ( (this.dict) && (Object.keys(this.dict).length > 0) && (symbol in this.dict) && (this.actorFromSymbol(symbol)) ) {
+					const ActorConstructor = this.actorFromSymbol(symbol);
+					if ( ( Actor.prototype === ActorConstructor.prototype) || ( Actor.prototype.isPrototypeOf(ActorConstructor.prototype) ) ) {
+						return new ActorConstructor( new Vector(x, y) );
+					}
 				}
-
-				//take constructor of moving actor from dictionary
-				const ActorConstructor = this.actorFromSymbol(str[j]);
-
-				if (!ActorConstructor) {
-					continue;
-				}
-
-				if ( ( Actor.prototype === ActorConstructor.prototype) || ( Actor.prototype.isPrototypeOf(ActorConstructor.prototype) ) ) {
-					actors.push( new ActorConstructor( new Vector(j, i) ) );
-				}
-			}
-		}
-
-		return actors;
+			} );
+		} ) ).filter( (actorConstr) => actorConstr !== undefined );
 	}
 
 	parse(plan) {
@@ -275,7 +233,6 @@ class Player extends Actor {
 		super(pos);
 		this.pos = pos.plus(new Vector(0, -0.5));
 		this.size = new Vector(0.8, 1.5);
-		// this.speed = new Vector(0, 0);
 	}
 
 	get type() {
@@ -333,7 +290,6 @@ class FireRain extends Fireball {
 		super(pos);
 		this.speed = new Vector(0, 3);
 
-		// this.initialPos = pos;
 		Object.defineProperty(this, 'initialPos', {
 			writable: false,
 			enumerable: true,
@@ -380,49 +336,6 @@ class Coin extends Actor {
 }
 
 
-// const schema = [
-//   '         ',
-//   '         ',
-//   '    =    ',
-//   '       o ',
-//   '     !xxx',
-//   ' @       ',
-//   'xxx!     ',
-//   '         '
-// ];
-// const actorDict = {
-//   '@': Player,
-//   '=': HorizontalFireball
-// }
-// const parser = new LevelParser(actorDict);
-// const level = parser.parse(schema);
-// runLevel(level, DOMDisplay)
-//   .then(status => console.log(`Игрок ${status}`));
-
-
-
-// const schemas = [
-//   [
-//     '         ',
-//     '         ',
-//     '    =    ',
-//     '       o ',
-//     '     !xxx',
-//     ' @       ',
-//     'xxx      ',
-//     '         '
-//   ],
-//   [
-//     '        ',
-//     '        ',
-//     '        ',
-//     '        o',
-//     '        x',
-//     '@   x    ',
-//     'x        ',
-//     '         '
-//   ]
-// ];
 
 const actorDict = {
   '@': Player,
@@ -438,54 +351,3 @@ loadLevels()
 	.catch( (err) => console.log('Произошла ошибка ' + err) )
 	.then( (schemas) => runGame(schemas, parser, DOMDisplay) )
 	.then( () => alert('Вы победили!!!') )
-
-
-
-
-// loadLevels()
-// 	.then(function(schemasJSON) {
-// 		const schemas = JSON.parse(schemasJSON)
-// 		return runGame(schemas, parser, DOMDisplay);
-// 	})
-// 	.then(() => alert('Вы победили!!!'))
-
-
-
-
-// function JSONparse(schemasJSON) {
-// 	return new Promise(function(resolve, reject) {
-// 		const schemas = JSON.parse(schemasJSON);
-// 		resolve(schemas);
-// 	})
-// }
-
-// loadLevels()
-// 	.then(JSONparse)
-// 	.catch(() => console.error('Ошибка произошла'))
-// 	.then( (schemas) => runGame(schemas, parser, DOMDisplay) )
-// 	.then(() => alert('Вы победили!!!'))
-
-
-
-
-// runGame(schemas, parser, DOMDisplay)
-//   .then(() => alert('Вы выиграли приз!'));
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
